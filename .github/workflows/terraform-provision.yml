@@ -1,0 +1,48 @@
+name: 'Terraform Azure Infrastructure'
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'terraform/**'
+  workflow_dispatch:
+
+env:
+  TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  TF_VAR_client_id: ${{ secrets.AZURE_CLIENT_ID }}
+  TF_VAR_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+  TF_VAR_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
+  TF_VAR_resource_group_name: ${{ secrets.AZURE_RG_ID }}
+  WORKING_DIR: ./terraform
+
+jobs:
+  terraform:
+    name: 'Terraform'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: '1.5.0'
+
+    - name: Generate SSH Key
+      run: |
+        mkdir -p ~/.ssh/
+        ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ""
+
+    - name: Terraform Init
+      run: terraform init
+      working-directory: ${{ env.WORKING_DIR }}
+
+    - name: Terraform Plan
+      run: terraform plan -out=tfplan
+      working-directory: ${{ env.WORKING_DIR }}
+
+    - name: Terraform Apply
+      if: github.ref == 'refs/heads/main'
+      run: terraform apply -auto-approve tfplan
+      working-directory: ${{ env.WORKING_DIR }}

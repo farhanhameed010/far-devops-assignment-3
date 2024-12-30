@@ -11,37 +11,37 @@ provider "azurerm" {
 variable "subscription_id" {
   description = "Azure Subscription ID"
   type        = string
-  default     = env("ARM_SUBSCRIPTION_ID")
+  default     = ""
 }
 
 variable "client_id" {
   description = "Azure Client ID"
   type        = string
-  default     = env("ARM_CLIENT_ID")
+  default     = ""
 }
 
 variable "client_secret" {
   description = "Azure Client Secret"
   type        = string
-  default     = env("ARM_CLIENT_SECRET")
+  default     = ""
 }
 
 variable "tenant_id" {
   description = "Azure Tenant ID"
   type        = string
-  default     = env("ARM_TENANT_ID")
+  default     = ""
 }
 
 variable "resource_group_name" {
   description = "Resource Group Name"
   type        = string
-  default     = env("ARM_RESOURCE_GROUP_NAME")
+  default     = ""
 }
 
 variable "ssh_public_key" {
   description = "SSH public key for VM access"
   type        = string
-  default     = env("ARM_SSH_PUBLIC_KEY")
+  default     = ""
 }
 
 

@@ -1,48 +1,62 @@
-name: 'Terraform Azure Infrastructure'
+name: Azure Infrastructure Management
 
 on:
-  push:
-    branches: [ "main" ]
-    paths:
-      - 'terraform/**'
   workflow_dispatch:
-
-env:
-  TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-  TF_VAR_client_id: ${{ secrets.AZURE_CLIENT_ID }}
-  TF_VAR_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
-  TF_VAR_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
-  TF_VAR_resource_group_name: ${{ secrets.AZURE_RG_ID }}
-  WORKING_DIR: ./terraform
+    inputs:
+      action:
+        description: 'Choose an action (provision/destroy)'
+        required: true
+        default: 'provision'
+        type: choice
+        options:
+          - provision
+          - destroy
 
 jobs:
-  terraform:
-    name: 'Terraform'
+  manage-infrastructure:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout Repository
+    # Checkout the repository
+    - name: Checkout Code
       uses: actions/checkout@v3
 
+    # Parse the Azure credentials
+    - name: Set Azure Credentials
+      id: azure-creds
+      run: |
+        echo "AZURE_CLIENT_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')" >> $GITHUB_ENV
+        echo "AZURE_CLIENT_SECRET=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')" >> $GITHUB_ENV
+        echo "AZURE_SUBSCRIPTION_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.subscriptionId')" >> $GITHUB_ENV
+        echo "AZURE_TENANT_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')" >> $GITHUB_ENV
+
+    # Login to Azure
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: |
+          {
+            "clientId": "$AZURE_CLIENT_ID",
+            "clientSecret": "$AZURE_CLIENT_SECRET",
+            "subscriptionId": "$AZURE_SUBSCRIPTION_ID",
+            "tenantId": "$AZURE_TENANT_ID"
+          }
+
+    # Set up Terraform
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
       with:
-        terraform_version: '1.5.0'
+        terraform_version: 1.5.5
 
-    - name: Generate SSH Key
-      run: |
-        mkdir -p ~/.ssh/
-        ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ""
-
+    # Terraform Init
     - name: Terraform Init
-      run: terraform init
-      working-directory: ${{ env.WORKING_DIR }}
+      run: terraform init -backend-config="terraform.tfvars"
 
-    - name: Terraform Plan
-      run: terraform plan -out=tfplan
-      working-directory: ${{ env.WORKING_DIR }}
-
-    - name: Terraform Apply
-      if: github.ref == 'refs/heads/main'
-      run: terraform apply -auto-approve tfplan
-      working-directory: ${{ env.WORKING_DIR }}
+    # Terraform Apply or Destroy
+    - name: Manage Infrastructure
+      run: |
+        if [ "${{ github.event.inputs.action }}" == "provision" ]; then
+          terraform apply -var-file="terraform.tfvars" -auto-approve;
+        elif [ "${{ github.event.inputs.action }}" == "destroy" ]; then
+          terraform destroy -var-file="terraform.tfvars" -auto-approve;
+        fi

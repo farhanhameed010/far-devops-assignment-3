@@ -1,4 +1,3 @@
-# File: terraform/main.tf
 provider "azurerm" {
   features {}
   skip_provider_registration = true
@@ -12,33 +11,39 @@ provider "azurerm" {
 variable "subscription_id" {
   description = "Azure Subscription ID"
   type        = string
+  default     = env("ARM_SUBSCRIPTION_ID")
 }
 
 variable "client_id" {
   description = "Azure Client ID"
   type        = string
+  default     = env("ARM_CLIENT_ID")
 }
 
 variable "client_secret" {
   description = "Azure Client Secret"
   type        = string
+  default     = env("ARM_CLIENT_SECRET")
 }
 
 variable "tenant_id" {
   description = "Azure Tenant ID"
   type        = string
+  default     = env("ARM_TENANT_ID")
 }
 
 variable "resource_group_name" {
   description = "Resource Group Name"
   type        = string
-  default     = "1-50a2c007-playground-sandbox"
+  default     = env("ARM_RESOURCE_GROUP_NAME")
 }
 
 variable "ssh_public_key" {
   description = "SSH public key for VM access"
   type        = string
+  default     = env("ARM_SSH_PUBLIC_KEY")
 }
+
 
 # Data Source for Existing Resource Group
 data "azurerm_resource_group" "existing_rg" {

@@ -1,3 +1,65 @@
+# name: Azure Infrastructure Management
+
+# on:
+#   workflow_dispatch:
+#     inputs:
+#       action:
+#         description: 'Choose an action (provision/destroy)'
+#         required: true
+#         default: 'provision'
+#         type: choice
+#         options:
+#           - provision
+#           - destroy
+
+# jobs:
+#   manage-infrastructure:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#     # Checkout the repository
+#     - name: Checkout Code
+#       uses: actions/checkout@v3
+
+#     # Login to Azure
+#     - name: Azure Login
+#       uses: azure/login@v1
+#       with:
+#         creds: |
+#           {
+#             "clientId": "${{ secrets.AZURE_CLIENT_ID }}",
+#             "clientSecret": "${{ secrets.AZURE_CLIENT_SECRET }}",
+#             "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}",
+#             "tenantId": "${{ secrets.AZURE_TENANT_ID }}"
+#           }
+
+#     # Set up Terraform
+#     - name: Setup Terraform
+#       uses: hashicorp/setup-terraform@v2
+#       with:
+#         terraform_version: 1.5.5
+
+#     # Navigate to Terraform Directory and Initialize
+#     - name: Terraform Init
+#       working-directory: ./terraform
+#       run: terraform init 
+
+#     - name: Terraform Apply/Destroy
+#       working-directory: ./terraform
+#       env:
+#         TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+#         TF_VAR_client_id: ${{ secrets.AZURE_CLIENT_ID }}
+#         TF_VAR_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+#         TF_VAR_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
+#         TF_VAR_resource_group_name: "1-50a2c007-playground-sandbox"
+#         TF_VAR_ssh_public_key: ${{ secrets.VM_SSH_PUBLIC_KEY }}
+#       run: |
+#         if [ "${{ github.event.inputs.action }}" == "provision" ]; then
+#           terraform apply -auto-approve
+#         elif [ "${{ github.event.inputs.action }}" == "destroy" ]; then
+#           terraform destroy -auto-approve
+#         fi
+
 name: Azure Infrastructure Management
 
 on:
@@ -15,47 +77,54 @@ on:
 jobs:
   manage-infrastructure:
     runs-on: ubuntu-latest
-
+    
     steps:
-    # Checkout the repository
-    - name: Checkout Code
-      uses: actions/checkout@v3
-
-    # Login to Azure
-    - name: Azure Login
-      uses: azure/login@v1
-      with:
-        creds: |
-          {
-            "clientId": "${{ secrets.AZURE_CLIENT_ID }}",
-            "clientSecret": "${{ secrets.AZURE_CLIENT_SECRET }}",
-            "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}",
-            "tenantId": "${{ secrets.AZURE_TENANT_ID }}"
-          }
-
-    # Set up Terraform
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v2
-      with:
-        terraform_version: 1.5.5
-
-    # Navigate to Terraform Directory and Initialize
-    - name: Terraform Init
-      working-directory: ./terraform
-      run: terraform init 
-
-    - name: Terraform Apply/Destroy
-      working-directory: ./terraform
-      env:
-        TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-        TF_VAR_client_id: ${{ secrets.AZURE_CLIENT_ID }}
-        TF_VAR_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
-        TF_VAR_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
-        TF_VAR_resource_group_name: "1-50a2c007-playground-sandbox"
-        TF_VAR_ssh_public_key: ${{ secrets.VM_SSH_PUBLIC_KEY }}
-      run: |
-        if [ "${{ github.event.inputs.action }}" == "provision" ]; then
-          terraform apply -auto-approve
-        elif [ "${{ github.event.inputs.action }}" == "destroy" ]; then
-          terraform destroy -auto-approve
-        fi
+      # Checkout the repository
+      - name: Checkout Code
+        uses: actions/checkout@v3
+      
+      # Login to Azure
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: |
+            {
+              "clientId": "${{ secrets.AZURE_CLIENT_ID }}",
+              "clientSecret": "${{ secrets.AZURE_CLIENT_SECRET }}",
+              "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}",
+              "tenantId": "${{ secrets.AZURE_TENANT_ID }}"
+            }
+      
+      # Set up Terraform
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.5
+      
+      # Navigate to Terraform Directory and Initialize
+      - name: Terraform Init
+        working-directory: ./terraform
+        env:
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_RESOURCE_GROUP_NAME: ${{ secrets.AZURE_RESOURCE_GROUP_NAME }}
+          ARM_SSH_PUBLIC_KEY: ${{ secrets.AZURE_SSH_PUBLIC_KEY }}
+        run: terraform init
+        
+      - name: Terraform Apply/Destroy
+        working-directory: ./terraform
+        env:
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_RESOURCE_GROUP_NAME: ${{ secrets.AZURE_RESOURCE_GROUP_NAME }}
+          ARM_SSH_PUBLIC_KEY: ${{ secrets.AZURE_SSH_PUBLIC_KEY }}
+        run: |
+          if [ "${{ github.event.inputs.action }}" == "provision" ]; then
+            terraform apply -auto-approve
+          elif [ "${{ github.event.inputs.action }}" == "destroy" ]; then
+            terraform destroy -auto-approve
+          fi

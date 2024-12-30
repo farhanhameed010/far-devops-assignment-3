@@ -44,6 +44,13 @@ variable "ssh_public_key" {
   default     = ""
 }
 
+variable "storage_account_name" {
+  description = "The name of the Azure Storage Account used for the Terraform backend."
+  type        = string
+  default     = "storacctkxelassign3"
+}
+
+
 
 # Data Source for Existing Resource Group
 data "azurerm_resource_group" "existing_rg" {

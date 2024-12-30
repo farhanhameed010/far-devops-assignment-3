@@ -9,8 +9,10 @@ terraform {
   required_version = ">= 1.0"
 
    backend "azurerm" {
-    use_azuread_auth     = true
+    resource_group_name  = data.azurerm_resource_group.existing_rg.name
+    storage_account_name = "YourStorageAccount"
     container_name       = "tfstate"
     key                  = "terraform.tfstate"
-  }
+    use_azuread_auth     = true
+    }
 }

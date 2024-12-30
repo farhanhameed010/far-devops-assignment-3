@@ -21,25 +21,16 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v3
 
-    # Parse the Azure credentials
-    - name: Set Azure Credentials
-      id: azure-creds
-      run: |
-        echo "AZURE_CLIENT_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')" >> $GITHUB_ENV
-        echo "AZURE_CLIENT_SECRET=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')" >> $GITHUB_ENV
-        echo "AZURE_SUBSCRIPTION_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.subscriptionId')" >> $GITHUB_ENV
-        echo "AZURE_TENANT_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')" >> $GITHUB_ENV
-
     # Login to Azure
     - name: Azure Login
       uses: azure/login@v1
       with:
         creds: |
           {
-            "clientId": "$AZURE_CLIENT_ID",
-            "clientSecret": "$AZURE_CLIENT_SECRET",
-            "subscriptionId": "$AZURE_SUBSCRIPTION_ID",
-            "tenantId": "$AZURE_TENANT_ID"
+            "clientId": "${{ secrets.AZURE_CLIENT_ID }}",
+            "clientSecret": "${{ secrets.AZURE_CLIENT_SECRET }}",
+            "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}",
+            "tenantId": "${{ secrets.AZURE_TENANT_ID }}"
           }
 
     # Set up Terraform
@@ -50,13 +41,13 @@ jobs:
 
     # Terraform Init
     - name: Terraform Init
-      run: terraform init -backend-config="terraform.tfvars"
+      run: terraform init
 
     # Terraform Apply or Destroy
     - name: Manage Infrastructure
       run: |
         if [ "${{ github.event.inputs.action }}" == "provision" ]; then
-          terraform apply -var-file="terraform.tfvars" -auto-approve;
+          terraform apply -auto-approve;
         elif [ "${{ github.event.inputs.action }}" == "destroy" ]; then
-          terraform destroy -var-file="terraform.tfvars" -auto-approve;
+          terraform destroy -auto-approve;
         fi

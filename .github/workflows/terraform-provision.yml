@@ -39,15 +39,18 @@ jobs:
       with:
         terraform_version: 1.5.5
 
-    # Terraform Init
+    # Navigate to Terraform Directory and Initialize
     - name: Terraform Init
-      run: terraform init
+      working-directory: ./terraform
+      run: terraform init -backend-config="terraform.tfvars"
 
     # Terraform Apply or Destroy
     - name: Manage Infrastructure
+      working-directory: ./terraform
       run: |
         if [ "${{ github.event.inputs.action }}" == "provision" ]; then
           terraform apply -auto-approve;
         elif [ "${{ github.event.inputs.action }}" == "destroy" ]; then
           terraform destroy -auto-approve;
         fi
+

@@ -9,8 +9,8 @@ terraform {
   required_version = ">= 1.0"
 
    backend "azurerm" {
-    resource_group_name  = data.azurerm_resource_group.existing_rg.name
-    storage_account_name = "YourStorageAccount"
+    rresource_group_name  = var.ARM_RESOURCE_GROUP_NAME
+    storage_account_name = var.ARM_STORAGE_ACCOUNT_NAME
     container_name       = "tfstate"
     key                  = "terraform.tfstate"
     use_azuread_auth     = true

@@ -35,6 +35,11 @@ variable "resource_group_name" {
   default     = "1-50a2c007-playground-sandbox"
 }
 
+variable "ssh_public_key" {
+  description = "SSH public key for VM access"
+  type        = string
+}
+
 # Data Source for Existing Resource Group
 data "azurerm_resource_group" "existing_rg" {
   name = var.resource_group_name
@@ -142,7 +147,7 @@ resource "azurerm_linux_virtual_machine" "vm" {
 
   admin_ssh_key {
     username   = "azureuser"
-    public_key = file("~/.ssh/id_rsa.pub")
+    public_key = var.ssh_public_key
   }
 
   os_disk {

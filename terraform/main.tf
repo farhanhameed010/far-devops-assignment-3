@@ -1,12 +1,16 @@
 # File: terraform/main.tf
 provider "azurerm" {
-  features {}
-  subscription_id                   = var.subscription_id
-  client_id                        = var.client_id
-  client_secret                    = var.client_secret
-  tenant_id                        = var.tenant_id
-  #resource_provider_registrations   = "none"
+  features {
+    resource_provider {
+      register_defaults = false
+    }
+  }
+  subscription_id = var.subscription_id
+  client_id       = var.client_id
+  client_secret   = var.client_secret
+  tenant_id       = var.tenant_id
 }
+
 
 # Variables
 variable "subscription_id" {

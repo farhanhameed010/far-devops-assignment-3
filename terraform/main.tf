@@ -32,7 +32,7 @@ variable "tenant_id" {
 variable "resource_group_name" {
   description = "Resource Group Name"
   type        = string
-  default     = "1-e333aa8e-playground-sandbox"
+  default     = "1-50a2c007-playground-sandbox"
 }
 
 # Data Source for Existing Resource Group

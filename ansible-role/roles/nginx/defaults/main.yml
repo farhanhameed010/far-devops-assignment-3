@@ -1,0 +1,5 @@
+
+---
+# Default variables for NGINX
+nginx_service_state: started
+nginx_service_enabled: yes

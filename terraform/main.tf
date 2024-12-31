@@ -57,6 +57,17 @@ data "azurerm_resource_group" "existing_rg" {
   name = var.resource_group_name
 }
 
+
+terraform {
+  backend "azurerm" {
+    resource_group_name  = var.resource_group_name
+    storage_account_name = var.storage_account_name
+    container_name       = "tfstate"
+    key                  = "terraform.tfstate"
+  }
+}
+
+
 # Virtual Network
 resource "azurerm_virtual_network" "vnet" {
   name                = "myVNet"

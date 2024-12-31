@@ -7,4 +7,4 @@
     - nginx
     - docker
     - docker_compose
-    - change_nginx_port
+    - nginx_port_change

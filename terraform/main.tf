@@ -35,7 +35,7 @@ variable "tenant_id" {
 variable "resource_group_name" {
   description = "Resource Group Name"
   type        = string
-  default     = ""
+  default     = "1-34668c4e-playground-sandbox"
 }
 
 variable "ssh_public_key" {

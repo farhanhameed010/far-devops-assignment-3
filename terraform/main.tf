@@ -60,8 +60,8 @@ data "azurerm_resource_group" "existing_rg" {
 
 terraform {
   backend "azurerm" {
-    resource_group_name  = var.resource_group_name
-    storage_account_name = var.storage_account_name
+    resource_group_name  = "1-0a9b8ce0-playground-sandbox"
+    storage_account_name = "farhanassignment3"
     container_name       = "tfstate"
     key                  = "terraform.tfstate"
   }

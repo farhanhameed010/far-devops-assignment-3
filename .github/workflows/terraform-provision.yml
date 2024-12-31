@@ -126,7 +126,7 @@ jobs:
           ARM_RESOURCE_GROUP_NAME: "1-34668c4e-playground-sandbox"
           ARM_STORAGE_ACCOUNT_NAME: ${{secrets.AZURE_STORAGE_ACCOUNT_NAME}}
           ARM_USE_AZUREAD: true
-          ARM_SSH_PUBLIC_KEY: ${{ secrets.AZURE_SSH_PUBLIC_KEY }}
+          TF_VAR_ssh_public_key: ${{ secrets.AZURE_SSH_PUBLIC_KEY }}
         run: |
           if [ "${{ github.event.inputs.action }}" == "provision" ]; then
             terraform apply -auto-approve

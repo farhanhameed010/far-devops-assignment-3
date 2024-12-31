@@ -1,3 +1,77 @@
+# name: Azure Infrastructure Management
+
+# on:
+#   workflow_dispatch:
+#     inputs:
+#       action:
+#         description: 'Choose an action (provision/destroy)'
+#         required: true
+#         default: 'provision'
+#         type: choice
+#         options:
+#           - provision
+#           - destroy
+
+# jobs:
+#   manage-infrastructure:
+#     runs-on: ubuntu-latest
+    
+#     steps:
+#       # Checkout the repository
+#       - name: Checkout Code
+#         uses: actions/checkout@v3
+      
+#       # Login to Azure
+#       - name: Azure Login
+#         uses: azure/login@v1
+#         with:
+#           creds: |
+#             {
+#               "clientId": "${{ secrets.AZURE_CLIENT_ID }}",
+#               "clientSecret": "${{ secrets.AZURE_CLIENT_SECRET }}",
+#               "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}",
+#               "tenantId": "${{ secrets.AZURE_TENANT_ID }}"
+#             }
+      
+#       # Set up Terraform
+#       - name: Setup Terraform
+#         uses: hashicorp/setup-terraform@v2
+#         with:
+#           terraform_version: 1.5.5
+      
+#       # Navigate to Terraform Directory and Initialize
+#       - name: Terraform Init
+#         working-directory: ./terraform
+#         env:
+#           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+#           ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+#           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+#           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+#           ARM_USE_AZUREAD: true
+#         run: |
+#           terraform init \
+#             -backend-config="resource_group_name=${{ secrets.RESOURCE_GROUP_NAME }}" \
+#             -backend-config="storage_account_name=${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}" \
+#             -backend-config="container_name=tfstate" \
+#             -backend-config="key=terraform.tfstate"
+#       - name: Terraform Apply/Destroy
+#         working-directory: ./terraform
+#         env:
+#           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+#           ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+#           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+#           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+#           TF_VAR_RESOURCE_GROUP_NAME: ${{secrets.RESOURCE_GROUP_NAME}}
+#           TF_VAR_STORAGE_ACCOUNT_NAME: ${{secrets.AZURE_STORAGE_ACCOUNT_NAME}}
+#           ARM_USE_AZUREAD: true
+#           TF_VAR_ssh_public_key: ${{ secrets.AZURE_SSH_PUBLIC_KEY }}
+#         run: |
+#           if [ "${{ github.event.inputs.action }}" == "provision" ]; then
+#             terraform apply -auto-approve
+#           elif [ "${{ github.event.inputs.action }}" == "destroy" ]; then
+#             terraform destroy -auto-approve
+#           fi
+
 name: Azure Infrastructure Management
 
 on:
@@ -12,16 +86,27 @@ on:
           - provision
           - destroy
 
+env:
+  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  ARM_USE_AZUREAD: true
+  TF_VAR_RESOURCE_GROUP_NAME: ${{secrets.RESOURCE_GROUP_NAME}}
+  TF_VAR_STORAGE_ACCOUNT_NAME: ${{secrets.AZURE_STORAGE_ACCOUNT_NAME}}
+  TF_VAR_ssh_public_key: ${{ secrets.AZURE_SSH_PUBLIC_KEY }}
+  WORKING_DIR: ./terraform
+
 jobs:
   manage-infrastructure:
     runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 60
     
     steps:
-      # Checkout the repository
       - name: Checkout Code
         uses: actions/checkout@v3
       
-      # Login to Azure
       - name: Azure Login
         uses: azure/login@v1
         with:
@@ -33,41 +118,36 @@ jobs:
               "tenantId": "${{ secrets.AZURE_TENANT_ID }}"
             }
       
-      # Set up Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.5.5
       
-      # Navigate to Terraform Directory and Initialize
       - name: Terraform Init
-        working-directory: ./terraform
-        env:
-          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          ARM_USE_AZUREAD: true
+        working-directory: ${{ env.WORKING_DIR }}
         run: |
           terraform init \
             -backend-config="resource_group_name=${{ secrets.RESOURCE_GROUP_NAME }}" \
             -backend-config="storage_account_name=${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}" \
             -backend-config="container_name=tfstate" \
             -backend-config="key=terraform.tfstate"
-      - name: Terraform Apply/Destroy
-        working-directory: ./terraform
-        env:
-          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          TF_VAR_RESOURCE_GROUP_NAME: ${{secrets.RESOURCE_GROUP_NAME}}
-          TF_VAR_STORAGE_ACCOUNT_NAME: ${{secrets.AZURE_STORAGE_ACCOUNT_NAME}}
-          ARM_USE_AZUREAD: true
-          TF_VAR_ssh_public_key: ${{ secrets.AZURE_SSH_PUBLIC_KEY }}
+
+      - name: Terraform Format
+        working-directory: ${{ env.WORKING_DIR }}
+        run: terraform fmt -check
+
+      - name: Terraform Plan
+        id: plan
+        working-directory: ${{ env.WORKING_DIR }}
         run: |
           if [ "${{ github.event.inputs.action }}" == "provision" ]; then
-            terraform apply -auto-approve
+            terraform plan -out=tfplan
           elif [ "${{ github.event.inputs.action }}" == "destroy" ]; then
-            terraform destroy -auto-approve
+            terraform plan -destroy -out=tfplan
           fi
+        continue-on-error: true
+
+      - name: Terraform Apply/Destroy
+        if: steps.plan.outcome == 'success'
+        working-directory: ${{ env.WORKING_DIR }}
+        run: terraform apply -auto-approve tfplan

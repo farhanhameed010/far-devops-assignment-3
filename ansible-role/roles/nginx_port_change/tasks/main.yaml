@@ -1,7 +1,12 @@
 ---
-- name: Update Nginx configuration to change port 80 to S81
-  replace:
-    path: /etc/nginx/nginx.conf
-    regexp: '^\s*listen\s+80;'
-    replace: '    listen {{ nginx_port }};'
+- name: Ensure nginx is installed
+  package:
+    name: nginx
+    state: present
+
+- name: Update nginx configuration to use port 81
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+    backup: yes
   notify: Restart NGINX

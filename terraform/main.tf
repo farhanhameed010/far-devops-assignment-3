@@ -1,10 +1,10 @@
 provider "azurerm" {
   features {}
   skip_provider_registration = true
-  subscription_id = var.subscription_id
-  client_id       = var.client_id
-  client_secret   = var.client_secret
-  tenant_id       = var.tenant_id
+  subscription_id            = var.subscription_id
+  client_id                  = var.client_id
+  client_secret              = var.client_secret
+  tenant_id                  = var.tenant_id
 }
 
 # Variables
@@ -102,7 +102,7 @@ resource "azurerm_public_ip" "public_ip" {
   location            = data.azurerm_resource_group.existing_rg.location
   resource_group_name = data.azurerm_resource_group.existing_rg.name
   allocation_method   = "Static"
-  sku                = "Standard"
+  sku                 = "Standard"
 
   tags = {
     environment = "dev"
@@ -163,7 +163,7 @@ resource "azurerm_linux_virtual_machine" "vm" {
   location            = data.azurerm_resource_group.existing_rg.location
   size                = "Standard_B1s"
   admin_username      = "azureuser"
-  
+
   network_interface_ids = [
     azurerm_network_interface.nic.id,
   ]

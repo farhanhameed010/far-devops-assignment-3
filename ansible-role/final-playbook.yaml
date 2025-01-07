@@ -4,7 +4,7 @@
   become: true
 
   roles:
-    - nginx
+    - nginx_install
     - docker
     - docker_compose
-    - nginx_port_change
+    - nginx_config

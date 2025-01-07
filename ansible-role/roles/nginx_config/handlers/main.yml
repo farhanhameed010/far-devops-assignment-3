@@ -1,0 +1,6 @@
+---
+- name: restart nginx service  # This name must match the notify line above
+  service:
+    name: nginx
+    state: restarted
+  become: yes
